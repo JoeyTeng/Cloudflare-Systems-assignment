@@ -1,9 +1,9 @@
 package main
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
+	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -11,6 +11,7 @@ import (
 )
 
 func createJWT(w http.ResponseWriter, req *http.Request) {
+	keys := "jwt-key"
 	issuer := "joey.teng.dev"
 
 	username := req.URL.Path
@@ -24,7 +25,14 @@ func createJWT(w http.ResponseWriter, req *http.Request) {
 		Subject:   username,
 	}
 
-	privateKey, _ := rsa.GenerateKey(rand.Reader, 4096)
+	// privateKey, _ := rsa.GenerateKey(rand.Reader, 4096)
+	privateKeyBytes, _ := os.ReadFile(keys)
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyBytes)
+	fmt.Println(err)
+	if err != nil {
+		panic(err)
+	}
+	publicKeyBytes, _ := os.ReadFile(keys + ".public.pem")
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS512, claims)
 	ss, _ := token.SignedString(privateKey)
@@ -41,8 +49,8 @@ func createJWT(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/plain")
 	http.SetCookie(w, &cookie)
-	w.Write(privateKey.PublicKey.N.Bytes())
-	w.WriteHeader(http.StatusOK)
+
+	w.Write(publicKeyBytes)
 }
 
 func verifyJWT(w http.ResponseWriter, req *http.Request) {

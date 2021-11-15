@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -28,7 +27,7 @@ func createJWT(w http.ResponseWriter, req *http.Request) {
 	// privateKey, _ := rsa.GenerateKey(rand.Reader, 4096)
 	privateKeyBytes, _ := os.ReadFile(keys)
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyBytes)
-	fmt.Println(err)
+
 	if err != nil {
 		panic(err)
 	}
@@ -80,8 +79,6 @@ func verifyJWT(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Header().Set("Content-Type", "text/plain")
 		w.Write([]byte("Invalid JWT claims: "))
-		w.Write([]byte(token.Claims.Valid().Error()))
-		w.Write([]byte("  \nError: "))
 		w.Write([]byte(err.Error()))
 	}
 }

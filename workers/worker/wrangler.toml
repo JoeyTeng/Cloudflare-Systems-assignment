@@ -1,0 +1,12 @@
+name = "worker"
+type = "javascript"
+
+account_id = ""
+workers_dev = true
+route = ""
+zone_id = ""
+compatibility_date = "2021-11-15"
+
+kv_namespaces = [
+	 { binding = "kv", id = "3a83a7b8c3374ef7b9496b430a089ce9" }
+]

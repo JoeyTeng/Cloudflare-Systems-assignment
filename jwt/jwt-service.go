@@ -15,7 +15,7 @@ func createJWT(w http.ResponseWriter, req *http.Request) {
 
 	username := req.URL.Path
 	if strings.HasPrefix(username, "/") {
-		username = strings.Split(username[1:], "/")[0]
+		username = strings.Split(username[1:], "/")[1]
 	}
 
 	claims := &jwt.RegisteredClaims{
@@ -32,16 +32,17 @@ func createJWT(w http.ResponseWriter, req *http.Request) {
 	cookie := http.Cookie{
 		Name:     "token",
 		Value:    ss,
-		Expires:  time.Now().UTC().AddDate(0, 0, 2),
+		Path:     "/",
+		Expires:  time.Now().Add(24 * time.Hour),
 		MaxAge:   24 * 3600,
 		SameSite: http.SameSiteLaxMode,
 		HttpOnly: true,
 		Secure:   true,
 	}
-	w.WriteHeader(http.StatusOK)
-	http.SetCookie(w, &cookie)
 	w.Header().Set("Content-Type", "text/plain")
+	http.SetCookie(w, &cookie)
 	w.Write(privateKey.PublicKey.N.Bytes())
+	w.WriteHeader(http.StatusOK)
 }
 
 func verifyJWT(w http.ResponseWriter, req *http.Request) {

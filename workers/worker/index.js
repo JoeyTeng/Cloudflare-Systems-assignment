@@ -1,5 +1,8 @@
 const POST_KEY_PREFIX = 'POST.'
-const POST_NAMESPACE = 'kv'
+const KV_NAMESPACE = 'kv'
+const USER_KEY_PREFIX = 'USER.'
+const JWT_AUTH_URL = 'https://trainer-serum-academic-beautiful.trycloudflare.com/auth/'
+const JWT_VERIFY_URL = 'https://trainer-serum-academic-beautiful.trycloudflare.com/verify'
 
 addEventListener('fetch', event => {
     event.respondWith(handleRequest(event.request))
@@ -23,6 +26,12 @@ async function handleRequest(request) {
         headers: { 'content-type': 'text/plain' },
         status: 404,
     })
+}
+
+async function registerUser(username) {
+    const key = USER_KEY_PREFIX + username
+    const time = Date.now().toString()
+    await kv.put(key, time)
 }
 
 async function post(request) {
@@ -81,6 +90,27 @@ async function post(request) {
                 statusText: 'missing field(s) ' + missing_fields,
             })
         }
+
+        // USER
+        const username = body['username']
+        const usernameResult = await kv.get(USER_KEY_PREFIX + username)
+        let cookie;
+
+        if (usernameResult === null) {
+            await registerUser(username)
+            cookie = (await fetch(JWT_VERIFY_URL + username)).cookie
+        } else {
+            const result = await fetch(JWT_VERIFY_URL, {
+                headers: request.headers
+            })
+            if (!result.ok) {
+                return new Response('Auth failed. Username has already been taken', {
+                    status: 401,
+                })
+            }
+            cookie = result.cookie
+        }
+
         const time = Date.now().toString()
         const uuid = await crypto.randomUUID()
             // key: POST.<TIMESTAMP>.<uuid>
@@ -95,7 +125,8 @@ async function post(request) {
         }
         return new Response(JSON.stringify(metadata), {
             headers: {
-                "content-type": "application/json;charset=UTF-8"
+                "content-type": "application/json;charset=UTF-8",
+                "Set-Cookie": cookie,
             },
             status: 200,
             statusText: 'success',

@@ -83,10 +83,14 @@ func verifyJWT(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func readme(w http.ResponseWriter, req *http.Request) {
+	http.ServeFile(w, req, "README.txt")
+}
+
 func main() {
 	http.HandleFunc("/auth/", createJWT)
 	http.HandleFunc("/verify", verifyJWT)
-	// http.HandleFunc("/README.txt", readme)
+	http.HandleFunc("/README.txt", readme)
 	// http.HandleFunc("/stats", stats)
 	http.ListenAndServe(":8080", nil)
 }
